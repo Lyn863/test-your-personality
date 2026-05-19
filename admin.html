@@ -28,7 +28,6 @@
 
     <!-- 管理面板 -->
     <div id="admin-panel" class="hidden">
-        <!-- 顶部导航 -->
         <header class="bg-white border-b border-neutral-200 px-6 py-4">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <h1 class="text-xl font-light">校园人格测试 - 管理后台</h1>
@@ -37,7 +36,6 @@
         </header>
 
         <main class="max-w-7xl mx-auto px-6 py-8">
-            <!-- 统计概览 -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white border border-neutral-200 p-6">
                     <p class="text-sm text-neutral-500 mb-2">总测试人数</p>
@@ -53,7 +51,6 @@
                 </div>
             </div>
 
-            <!-- 图表区域 -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white border border-neutral-200 p-6">
                     <h2 class="text-lg font-light mb-4">人格类型分布</h2>
@@ -69,7 +66,6 @@
                 </div>
             </div>
 
-            <!-- 数据表格 -->
             <div class="bg-white border border-neutral-200 p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-light">测试记录</h2>
@@ -104,24 +100,24 @@
     </div>
 
     <script>
-        // 后端 API 地址 - 自动适配部署环境
-        const API_BASE = window.location.origin;
+        // 后端 API 地址
+        const API_BASE = '';
         
         let adminPassword = '';
         let allResults = [];
 
-        // 人格类型名称映射 - 10种新类型
+        // 人格类型名称映射
         const typeNames = {
             'campus_apollo': '校园阿波罗',
-            'avoidant_frail_eggroll': '回避型脆皮蛋卷',
-            'campus_columbus': '校园哥伦布',
-            'veteran_roll_king': '老资历卷王',
-            'good_person': '好人',
-            'campus_sekiros': '校园只狼',
-            'chill_person': '没招了淡人',
-            'campus_only_human': '校园唯一人类',
-            'campus_regent': '校园摄政王',
-            'elder': '老辈子'
+            'campus_athena': '校园雅典娜',
+            'campus_dionysus': '校园狄俄尼索斯',
+            'campus_hermes': '校园赫尔墨斯',
+            'campus_artemis': '校园阿尔忒弥斯',
+            'campus_zeus': '校园宙斯',
+            'campus_demeter': '校园德墨忒尔',
+            'campus_poseidon': '校园波塞冬',
+            'campus_hades': '校园哈迪斯',
+            'campus_hestia': '校园赫斯提亚'
         };
 
         // 登录
@@ -205,7 +201,6 @@
         let dimensionChart = null;
 
         function updateCharts() {
-            // 人格类型分布
             const typeCounts = {};
             Object.keys(typeNames).forEach(id => typeCounts[id] = 0);
             allResults.forEach(r => {
@@ -214,10 +209,7 @@
                 }
             });
 
-            const colors = [
-                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-                '#FF9F40', '#C9CBCF', '#7BC225', '#1A73E8', '#EA4335'
-            ];
+            const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#C9CBCF', '#7BC225', '#1A73E8', '#EA4335'];
 
             if (typeChart) typeChart.destroy();
             typeChart = new Chart(document.getElementById('type-chart'), {
@@ -236,7 +228,6 @@
                 }
             });
 
-            // 维度平均分
             const dimTotals = { E: 0, O: 0, A: 0, C: 0, N: 0 };
             let validCount = 0;
             allResults.forEach(r => {
@@ -322,8 +313,7 @@
                 return;
             }
 
-            const headers = ['ID', '时间', '人格类型', 'E', 'O', 'A', 'C', 'N', '学业阶段', '是否做过测试', '测试频率', '测试目的', '自我认知帮助', '提及标签', '结果准确性', '心理影响', '对测试看法', 'MBTI', '测试时长(秒)'];
-
+            const headers = ['ID', '时间', '人格类型', 'E', 'O', 'A', 'C', 'N', '学业阶段', 'MBTI', '测试时长(秒)'];
             const rows = allResults.map(r => {
                 const s = r.scores || {};
                 const u = r.userInfo || {};
@@ -337,14 +327,6 @@
                     s.C !== undefined ? s.C.toFixed(1) : '',
                     s.N !== undefined ? s.N.toFixed(1) : '',
                     u.educationStage || '',
-                    u.hasTakenPersonalityTest !== undefined ? (u.hasTakenPersonalityTest ? '是' : '否') : '',
-                    u.testFrequency || '',
-                    u.testPurpose || '',
-                    u.helpfulnessForSelfAwareness || '',
-                    u.mentionPersonalityTag || '',
-                    u.resultAccuracy || '',
-                    u.psychologicalImpact || '',
-                    u.viewOnPersonalityTests || '',
                     u.mbti || '',
                     r.test_duration ? Math.round(r.test_duration) : ''
                 ];
