@@ -3,1169 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>校园人格测试</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <title>校园人格测试 - 发现你的独特人格</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .screen { min-height: 100vh; }
+        .transition-all-300 { transition: all 0.3s ease; }
         
-        :root {
-            --primary-color: #4f46e5;
-            --secondary-color: #ec4899;
-            --accent-color: #8b5cf6;
-            --background-color: #f3f4f6;
-            --card-background: #ffffff;
-            --text-primary: #1f2937;
-            --text-secondary: #6b7280;
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-        }
+        /* 进度条动画 */
+        .progress-fill { transition: width 0.5s ease; }
         
-        body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
         
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
+        /* 选项按钮样式 */
+        .choice-btn { transition: all 0.3s ease; }
+        .choice-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         
-        .card {
-            background-color: var(--card-background);
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
+        /* 结果卡片 */
+        .result-card { background: linear-gradient(135deg, #fff 0%, #fafafa 100%); }
         
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            display: inline-block;
-            text-align: center;
-        }
+        /* 维度条动画 */
+        .dimension-bar { transition: height 1s ease; }
         
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
+        /* Toast 提示 */
+        .toast { transition: opacity 0.3s ease; }
         
-        .btn-primary:hover {
-            background-color: #4338ca;
-            transform: translateY(-2px);
-        }
-        
-        .btn-secondary {
-            background-color: var(--secondary-color);
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #db2777;
-            transform: translateY(-2px);
-        }
-        
-        .btn-outline {
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-            background-color: transparent;
-        }
-        
-        .btn-outline:hover {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .progress-bar {
-            height: 8px;
-            background-color: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 1.5rem;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: var(--primary-color);
-            transition: width 0.3s ease;
-        }
-        
-        .option {
-            padding: 0.75rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .option:hover {
-            border-color: var(--primary-color);
-            background-color: #f9fafb;
-        }
-        
-        .option.selected {
-            border-color: var(--primary-color);
-            background-color: rgba(79, 70, 229, 0.1);
-        }
-        
-        .option-score {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-        
-        .score-btn {
-            flex: 1;
-            padding: 0.5rem;
-            text-align: center;
-            border: 1px solid #e5e7eb;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .score-btn:first-child {
-            border-radius: 0.5rem 0 0 0.5rem;
-        }
-        
-        .score-btn:last-child {
-            border-radius: 0 0.5rem 0.5rem 0;
-        }
-        
-        .score-btn:hover {
-            background-color: #f9fafb;
-        }
-        
-        .score-btn.selected {
-            background-color: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-        
-        .radio-group {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        
-        .radio-option {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-        
-        .radio-option input[type="radio"] {
-            margin-right: 0.5rem;
-        }
-        
-        .text-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .text-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-        
-        .result-card {
-            text-align: center;
-            padding: 2rem;
-        }
-        
-        .result-icon {
-            width: 150px;
-            height: 150px;
-            margin: 0 auto 1.5rem;
-            border-radius: 50%;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .result-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .dimension-bar {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .dimension-label {
-            width: 80px;
-            font-weight: 500;
-        }
-        
-        .dimension-progress {
-            flex: 1;
-            height: 8px;
-            background-color: #e5e7eb;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 0 1rem;
-        }
-        
-        .dimension-fill {
-            height: 100%;
-            transition: width 1s ease;
-        }
-        
-        .dimension-score {
-            width: 40px;
-            text-align: right;
-            font-weight: 500;
-        }
-        
-        .loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-        
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #e5e7eb;
-            border-top-color: var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-        
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: space-between;
-            margin-top: 2rem;
-        }
-        
-        .btn-group .btn {
-            flex: 1;
-        }
-        
+        /* 移动端优化 */
         @media (max-width: 640px) {
-            .card {
-                padding: 1.5rem;
-            }
-            
-            .btn-group {
-                flex-direction: column;
-            }
-            
-            .radio-group {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .result-icon {
-                width: 120px;
-                height: 120px;
-            }
+            .choice-btn { font-size: 0.875rem; padding: 0.75rem; }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <!-- 首页/引导页 -->
-        <div id="welcome-page" class="card fade-in">
-            <h1 class="text-3xl font-bold text-center mb-4">校园人格测试</h1>
-            <p class="text-lg text-center mb-6">探索你的校园人格类型，了解更真实的自己</p>
-            <div class="text-center mb-8">
-                <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/8bf4b8b7a66b46d5bd4b9ffbf9e76a6e~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758237&x-signature=wltI5CpfxShMnnPiQ5IMxnTg8aU%3D" alt="测试图标" class="w-32 h-32 mx-auto">
-            </div>
-            <p class="mb-4">本测试基于五大人格维度（外向性E、开放性O、宜人性A、尽责性C、神经质N）设计，通过40道题目评估你的校园人格类型。</p>
-            <p class="mb-6">完成测试后，你将获得详细的人格分析报告，了解自己在校园环境中的优势和特点。</p>
-            <div class="text-center">
-                <button id="start-test" class="btn btn-primary">开始测试</button>
-            </div>
-        </div>
+<body class="bg-neutral-50 text-neutral-900 antialiased">
+    <!-- 自定义光标 -->
+    <div id="custom-cursor" class="fixed w-5 h-5 border border-black rounded-full pointer-events-none z-50 opacity-0 transition-all duration-150" style="transform: translate(-50%, -50%);"></div>
 
-        <!-- 测试答题页 -->
-        <div id="test-page" class="card hidden">
-            <div class="progress-bar">
-                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+    <!-- 引导页 -->
+    <div id="intro-page" class="screen flex items-center justify-center px-4">
+        <div class="max-w-2xl w-full text-center fade-in">
+            <div class="mb-8">
+                <span class="text-6xl mb-6 block">🎭</span>
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">校园人格测试</h1>
+                <p class="text-lg text-neutral-600">基于大五人格理论，通过50道题目发现你的独特人格特质</p>
             </div>
-            <div class="flex justify-between items-center mb-4">
-                <span id="question-number" class="text-lg font-medium">问题 1/40</span>
-                <span id="question-progress" class="text-sm text-gray-500">1/40</span>
-            </div>
-            <h2 id="question-text" class="text-xl font-bold mb-6">问题加载中...</h2>
-            <div id="options-container" class="mb-6">
-                <!-- 选项将通过JavaScript动态生成 -->
-            </div>
-            <div class="btn-group">
-                <button id="prev-btn" class="btn btn-outline" disabled>上一题</button>
-                <button id="next-btn" class="btn btn-primary">下一题</button>
-            </div>
-        </div>
-
-        <!-- 结果计算页 -->
-        <div id="loading-page" class="card hidden">
-            <div class="loading">
-                <div class="loading-spinner"></div>
-                <p class="text-lg">正在分析你的答案...</p>
-                <p class="text-sm text-gray-500 mt-2">这可能需要几秒钟时间</p>
-            </div>
-        </div>
-
-        <!-- 结果展示页 -->
-        <div id="result-page" class="card hidden">
-            <div class="result-card fade-in">
-                <h2 class="text-2xl font-bold mb-2">你的校园人格类型是</h2>
-                <h1 id="personality-type" class="text-4xl font-bold mb-6">校园阿波罗</h1>
-                <div class="result-icon">
-                    <img id="personality-icon" src="https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/af94add0fe24423f9b278f078de97d4a~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758221&x-signature=C%2FsiIJ3r187oNnGdGVckZHtdcqA%3D" alt="人格类型图标">
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12 text-sm text-neutral-500">
+                <div class="bg-white py-4 px-3 rounded-lg border border-neutral-200">
+                    <div class="text-2xl mb-2">⏱️</div>
+                    <div>约5分钟</div>
                 </div>
-                <div class="mb-8">
-                    <h3 class="text-xl font-bold mb-4">维度组合</h3>
-                    <div id="dimensions-container">
-                        <!-- 维度条形图将通过JavaScript动态生成 -->
+                <div class="bg-white py-4 px-3 rounded-lg border border-neutral-200">
+                    <div class="text-2xl mb-2">📊</div>
+                    <div>50道题目</div>
+                </div>
+                <div class="bg-white py-4 px-3 rounded-lg border border-neutral-200">
+                    <div class="text-2xl mb-2">🎯</div>
+                    <div>10种人格</div>
+                </div>
+                <div class="bg-white py-4 px-3 rounded-lg border border-neutral-200">
+                    <div class="text-2xl mb-2">🔒</div>
+                    <div>完全匿名</div>
+                </div>
+            </div>
+            
+            <div class="space-y-4 mb-12">
+                <h2 class="text-xl font-semibold mb-4">大五人格维度</h2>
+                <div class="flex flex-wrap justify-center gap-3">
+                    <span class="bg-neutral-100 px-4 py-2 rounded-full text-sm">外向性 (E)</span>
+                    <span class="bg-neutral-100 px-4 py-2 rounded-full text-sm">开放性 (O)</span>
+                    <span class="bg-neutral-100 px-4 py-2 rounded-full text-sm">宜人性 (A)</span>
+                    <span class="bg-neutral-100 px-4 py-2 rounded-full text-sm">尽责性 (C)</span>
+                    <span class="bg-neutral-100 px-4 py-2 rounded-full text-sm">神经质 (N)</span>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="start-test-btn" class="bg-black text-white px-8 py-4 text-lg font-medium hover:bg-neutral-800 transition-all-300 hover-effect">
+                    开始测试 <i class="fa fa-arrow-right ml-2"></i>
+                </button>
+                <button id="stats-btn" class="border border-neutral-300 px-8 py-4 text-lg font-medium hover:bg-neutral-100 transition-all-300 hover-effect">
+                    查看统计
+                </button>
+            </div>
+            
+            <p class="text-sm text-neutral-400 mt-8">已有 <span id="total-tests" class="font-semibold">0</span> 人参与测试</p>
+        </div>
+    </div>
+
+    <!-- 测试页 -->
+    <div id="test-page" class="screen flex flex-col hidden">
+        <!-- 顶部进度 -->
+        <div class="bg-white border-b border-neutral-200 px-4 py-4 sticky top-0 z-10">
+            <div class="max-w-2xl mx-auto">
+                <div class="flex justify-between items-center mb-2">
+                    <button id="back-to-intro-btn" class="text-sm text-neutral-500 hover:text-black transition-colors">
+                        <i class="fa fa-arrow-left mr-1"></i> 返回
+                    </button>
+                    <span id="question-number" class="text-sm font-medium">问题 1/50</span>
+                    <span id="progress-text" class="text-sm text-neutral-500">0%</span>
+                </div>
+                <div class="h-1 bg-neutral-100 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-black progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 问题区域 -->
+        <div class="flex-1 flex items-center justify-center px-4 py-8">
+            <div class="max-w-xl w-full fade-in">
+                <p id="question-text" class="text-xl md:text-2xl text-center mb-8 leading-relaxed"></p>
+                
+                <!-- 评分选项 -->
+                <div id="rating-options" class="hidden">
+                    <div class="grid grid-cols-5 gap-2 mb-4">
+                        <button class="rating-btn py-4 border border-neutral-300 hover:border-black hover:bg-neutral-50 transition-all-300 flex flex-col items-center justify-center" data-value="1">
+                            <span class="text-xs mb-1 text-neutral-500">完全不符</span>
+                        </button>
+                        <button class="rating-btn py-4 border border-neutral-300 hover:border-black hover:bg-neutral-50 transition-all-300 flex flex-col items-center justify-center" data-value="2">
+                            <span class="text-xs mb-1 text-neutral-500">不太符合</span>
+                        </button>
+                        <button class="rating-btn py-4 border border-neutral-300 hover:border-black hover:bg-neutral-50 transition-all-300 flex flex-col items-center justify-center" data-value="3">
+                            <span class="text-xs mb-1 text-neutral-500">一般</span>
+                        </button>
+                        <button class="rating-btn py-4 border border-neutral-300 hover:border-black hover:bg-neutral-50 transition-all-300 flex flex-col items-center justify-center" data-value="4">
+                            <span class="text-xs mb-1 text-neutral-500">比较符合</span>
+                        </button>
+                        <button class="rating-btn py-4 border border-neutral-300 hover:border-black hover:bg-neutral-50 transition-all-300 flex flex-col items-center justify-center" data-value="5">
+                            <span class="text-xs mb-1 text-neutral-500">完全符合</span>
+                        </button>
                     </div>
                 </div>
-                <div class="mb-8">
-                    <h3 class="text-xl font-bold mb-4">特征描述</h3>
-                    <p id="personality-description" class="text-lg">
-                        热情开朗，喜欢结交朋友，情绪稳定，很少焦虑。待人友善，容易信任他人。做事有条理但不刻板。是团队中的"阳光人物"。
-                    </p>
+                
+                <!-- 是/否选项 -->
+                <div id="yes-no-options" class="hidden">
+                    <div class="grid grid-cols-2 gap-4">
+                        <button class="yes-no-btn py-4 border border-neutral-300 hover:border-black hover:bg-neutral-50 transition-all-300 hover-effect" data-value="yes">是的</button>
+                        <button class="yes-no-btn py-4 border border-neutral-300 hover:border-black hover:bg-neutral-50 transition-all-300 hover-effect" data-value="no">不是</button>
+                    </div>
                 </div>
-                <div class="btn-group">
-                    <button id="share-btn" class="btn btn-secondary">
-                        <i class="fa fa-share-alt mr-2"></i>分享结果
-                    </button>
-                    <button id="retake-btn" class="btn btn-outline">
-                        <i class="fa fa-refresh mr-2"></i>重新测试
-                    </button>
+                
+                <!-- 选择题选项 -->
+                <div id="multiple-choice-options" class="hidden space-y-3"></div>
+                
+                <!-- MBTI输入 -->
+                <div id="mbti-input" class="hidden">
+                    <input type="text" id="mbti-text" class="w-full px-4 py-4 border border-neutral-300 focus:outline-none focus:border-black text-center text-lg" placeholder="请输入您的MBTI（如：INTJ）" maxlength="4">
                 </div>
+            </div>
+        </div>
+        
+        <!-- 底部导航 -->
+        <div class="bg-white border-t border-neutral-200 px-4 py-4">
+            <div class="max-w-xl mx-auto flex justify-between">
+                <button id="prev-btn" class="px-6 py-3 border border-neutral-300 hover:bg-neutral-50 transition-all-300 disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+                    <i class="fa fa-arrow-left mr-2"></i> 上一题
+                </button>
+                <button id="next-btn" class="px-6 py-3 bg-black text-white hover:bg-neutral-800 transition-all-300 disabled:opacity-30 disabled:cursor-not-allowed" disabled>
+                    下一题 <i class="fa fa-arrow-right ml-2"></i>
+                </button>
             </div>
         </div>
     </div>
 
-    <script>
-        // 问题数据
-        const questions = [
-            {
-                id: 1,
-                text: "喜欢周围有很多朋友",
-                dimension: "E",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 2,
-                text: "喜欢幻想和白日梦",
-                dimension: "O",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 3,
-                text: "彬彬有礼，非常客气",
-                dimension: "A",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 4,
-                text: "保持物品整洁干净",
-                dimension: "C",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 5,
-                text: "感到愤怒、充满怨恨",
-                dimension: "N",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 6,
-                text: "用威胁或奉承说服别人",
-                dimension: "A",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 7,
-                text: "擅长安排进度按时完成任务",
-                dimension: "C",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 8,
-                text: "压力大时感到要垮了",
-                dimension: "N",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 9,
-                text: "对大自然和艺术的美着迷",
-                dimension: "O",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 10,
-                text: "自我中心，不顾别人感受",
-                dimension: "A",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 11,
-                text: "事到临头才发现没准备好",
-                dimension: "C",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 12,
-                text: "喜欢与别人聊天",
-                dimension: "E",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 13,
-                text: "争议学说会误导学生",
-                dimension: "O",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 14,
-                text: "随时准备好反击挑衅",
-                dimension: "A",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 15,
-                text: "经常紧张、心神不定",
-                dimension: "N",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 16,
-                text: "喜欢置身激烈活动",
-                dimension: "E",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 17,
-                text: "对诗词没有感觉",
-                dimension: "O",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 18,
-                text: "觉得自己比大多数优秀",
-                dimension: "A",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 19,
-                text: "有明确目标且有条不紊",
-                dimension: "C",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 20,
-                text: "回避人多场合",
-                dimension: "E",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 21,
-                text: "让头脑想象很困难",
-                dimension: "O",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 22,
-                text: "开始工作前浪费时间",
-                dimension: "C",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 23,
-                text: "很少感到恐惧或焦虑",
-                dimension: "N",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 24,
-                text: "精力旺盛，充满能量",
-                dimension: "E",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 25,
-                text: "相信人性善良",
-                dimension: "A",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 26,
-                text: "别人对待方式使我愤怒",
-                dimension: "N",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 27,
-                text: "乐天开朗",
-                dimension: "E",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 28,
-                text: "对人冷淡，保持距离",
-                dimension: "E",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 29,
-                text: "承诺会贯彻到底",
-                dimension: "C",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 30,
-                text: "不喜欢聊天，无乐趣",
-                dimension: "E",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 31,
-                text: "阅读诗或艺术品兴奋喜悦",
-                dimension: "O",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 32,
-                text: "很少感觉忧伤或沮丧",
-                dimension: "N",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 33,
-                text: "对宇宙规律无兴趣",
-                dimension: "O",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 34,
-                text: "经常感觉无助，需要帮助",
-                dimension: "N",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 35,
-                text: "总不能把事情安排井井有条",
-                dimension: "C",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 36,
-                text: "羞愧想躲起来",
-                dimension: "N",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 37,
-                text: "宁愿独自做事，不领导他人",
-                dimension: "E",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 38,
-                text: "喜欢研究理论和抽象问题",
-                dimension: "O",
-                direction: "positive",
-                type: "score"
-            },
-            {
-                id: 39,
-                text: "会利用别人达到目的",
-                dimension: "A",
-                direction: "negative",
-                type: "score"
-            },
-            {
-                id: 40,
-                text: "每件事力求做到最好",
-                dimension: "C",
-                direction: "positive",
-                type: "score"
-            },
-            // 以下是不计分的问题
-            {
-                id: 41,
-                text: "您所处的学业阶段",
-                dimension: "none",
-                direction: "none",
-                type: "select",
-                options: ["初中", "高中", "大一", "大二", "大三", "大四", "研究生", "已就业"]
-            },
-            {
-                id: 42,
-                text: "您之前做过人格测试吗",
-                dimension: "none",
-                direction: "none",
-                type: "radio",
-                options: ["是", "否"]
-            },
-            {
-                id: 43,
-                text: "您做人格测试的频率",
-                dimension: "none",
-                direction: "none",
-                type: "select",
-                options: ["从未做过", "偶尔做一次", "每年做几次", "经常做"]
-            },
-            {
-                id: 44,
-                text: "您进行人格测试的主要目的是什么",
-                dimension: "none",
-                direction: "none",
-                type: "select",
-                options: ["自我探索", "社交娱乐", "职业规划", "了解他人", "其他"]
-            },
-            {
-                id: 45,
-                text: "您认为人格测试对您的自我认知有帮助吗",
-                dimension: "none",
-                direction: "none",
-                type: "radio",
-                options: ["有很大帮助", "有一些帮助", "没有帮助", "不确定"]
-            },
-            {
-                id: 46,
-                text: "您是否会在日常交流中主动提及或使用自己的人格标签",
-                dimension: "none",
-                direction: "none",
-                type: "radio",
-                options: ["经常会", "偶尔会", "很少会", "从不"]
-            },
-            {
-                id: 47,
-                text: "您觉得人格测试结果多大程度上准确描述您的性格",
-                dimension: "none",
-                direction: "none",
-                type: "select",
-                options: ["非常准确", "比较准确", "一般", "不太准确", "完全不准确"]
-            },
-            {
-                id: 48,
-                text: "您是否曾因测试结果而产生心理暗示或行为改变",
-                dimension: "none",
-                direction: "none",
-                type: "radio",
-                options: ["是，有明显改变", "是，有轻微改变", "否，没有改变", "不确定"]
-            },
-            {
-                id: 49,
-                text: "您如何看待网络上各种人格测试传播的现象",
-                dimension: "none",
-                direction: "none",
-                type: "select",
-                options: ["很有意义，帮助人们认识自己", "有一定价值，但不要过度依赖", "娱乐性质更多", "没有科学依据，不建议相信"]
-            },
-            {
-                id: 50,
-                text: "您的MBTI是什么",
-                dimension: "none",
-                direction: "none",
-                type: "text"
-            }
-        ];
+    <!-- 加载页 -->
+    <div id="loading-page" class="screen flex items-center justify-center hidden">
+        <div class="text-center fade-in">
+            <div class="text-6xl mb-6 animate-bounce">🔮</div>
+            <h2 class="text-2xl font-medium mb-2">正在分析你的性格...</h2>
+            <p class="text-neutral-500">请稍候</p>
+        </div>
+    </div>
 
-        // 人格类型数据
-        const personalityTypes = [
-            {
-                id: 1,
-                name: "校园阿波罗",
-                dimensions: { E: "high", N: "low", A: "high", C: "medium", O: "medium" },
-                description: "热情开朗，喜欢结交朋友，情绪稳定，很少焦虑。待人友善，容易信任他人。做事有条理但不刻板。是团队中的\"阳光人物\"。",
-                icon: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/af94add0fe24423f9b278f078de97d4a~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758221&x-signature=C%2FsiIJ3r187oNnGdGVckZHtdcqA%3D"
-            },
-            {
-                id: 2,
-                name: "回避型全自动食堂",
-                dimensions: { N: "high", E: "low", A: "medium", C: "medium", O: "low" },
-                description: "容易紧张、担忧，常感到压力或无助。偏爱独处，回避热闹场合。想法保守，不喜欢变化和抽象理论。对批评和冲突高度敏感。",
-                icon: "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/accde39ac1bc4a70bb0ef374d2a6ad36~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758222&x-signature=V%2Fy9fYu9zG5rx4JutvjfcQIPH5Q%3D"
-            },
-            {
-                id: 3,
-                name: "校园哥伦布",
-                dimensions: { O: "high", N: "medium", E: "medium", A: "medium", C: "medium" },
-                description: "充满求知欲和想象力，喜欢艺术、哲学和新事物。情绪起伏不极端。既能独立钻研，也能与人分享新奇想法。做事灵活但不一定严谨。",
-                icon: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/8bf4b8b7a66b46d5bd4b9ffbf9e76a6e~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758237&x-signature=wltI5CpfxShMnnPiQ5IMxnTg8aU%3D"
-            },
-            {
-                id: 4,
-                name: "老资历卷王",
-                dimensions: { C: "high", N: "low", O: "low", E: "medium", A: "medium" },
-                description: "做事极有条理，目标明确，坚持到底。情绪稳定，很少冲动。偏好传统和熟悉的方式，不喜欢天马行空。值得信赖，但可能略显刻板。",
-                icon: "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/469b625c44e546eba13f497715971602~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758222&x-signature=0S969R17LVBxleLHO77hORYpPVc%3D"
-            },
-            {
-                id: 5,
-                name: "好人",
-                dimensions: { A: "high", E: "high", N: "low", C: "medium", O: "medium" },
-                description: "温和体贴，乐于助人，几乎从不与人争吵。喜欢社交，人缘好。心态乐观，很少沮丧。愿意妥协，但有时会过度迁就他人。",
-                icon: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/3037870ca9cb429fba87735e1d58b211~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758226&x-signature=DWfcbNJ3qb1Kh5BgozcXlumWkEI%3D"
-            },
-            {
-                id: 6,
-                name: "校园孤狼🐺",
-                dimensions: { E: "low", N: "medium", A: "low", C: "high", O: "low" },
-                description: "喜欢独处，回避人群和聚会。对人保持距离，甚至有些冷淡或固执。做事认真可靠，但不喜欢被干扰。情绪稳定但有时的孤独感会引发忧郁。",
-                icon: "https://p6-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/8b7a4dedb3c548e2955a4e14571ee11f~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758285&x-signature=zTcaHqhCBks9C%2BCsJ%2FrJHVpxyiQ%3D"
-            },
-            {
-                id: 7,
-                name: "没招了淡人",
-                dimensions: { N: "low", E: "medium", A: "medium", C: "medium", O: "medium" },
-                description: "情绪极其稳定，很少感到恐惧、愤怒或羞愧。遇事冷静，不易慌张。不过分内向或外向，做事按部就班。是可靠的\"定海神针\"。",
-                icon: "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/f3dc533078c14c25942a66a8fef50af5~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758280&x-signature=5b9WfFACnAlbi5O7gsV8mbelBSM%3D"
-            },
-            {
-                id: 8,
-                name: "ddl的艺术家",
-                dimensions: { O: "high", N: "high", E: "low", A: "medium", C: "low" },
-                description: "富有创造力和审美感受力，常沉浸于幻想或艺术创作。情绪波动大，容易忧郁或羞愧。喜欢独处，做事随意，不擅长计划。内心世界丰富而敏感。",
-                icon: "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/1c77f8bbf7864cd0ba62e610cf45d068~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758273&x-signature=o%2FiIp8i2k3td%2BCHlRNn4hOIhRss%3D"
-            },
-            {
-                id: 9,
-                name: "校园摄政王",
-                dimensions: { A: "low", E: "high", C: "high", N: "low", O: "medium" },
-                description: "自信甚至自负，喜欢领导他人，不介意利用手段达到目的。精力充沛，善于社交，但可能缺乏共情。做事高效，目标明确，常成为团队中的强势人物。",
-                icon: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/960f175e61a84b058a53a71413e36822~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758268&x-signature=VQksfnJiqoAZ%2BQfBTlKhrp%2BHMIw%3D"
-            },
-            {
-                id: 10,
-                name: "老辈子",
-                dimensions: { O: "low", C: "high", N: "medium", E: "low", A: "high" },
-                description: "尊重传统，不喜欢新潮或争议性观点。做事认真、有条理，遵守规则。性格安静，待人礼貌但保持距离。情绪稳定略有忧虑。适合需要规范和耐心的职业。",
-                icon: "https://p6-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/254f7e87614b44c9925fe0c8f115dacb~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=202605191249250A33FF5347A5CA90E232&rrcfp=f06b921b&x-expires=1781758296&x-signature=B5HbPzHojgWM%2F7YKVRsU31YB9VQ%3D"
-            }
-        ];
-
-        // 维度得分范围
-        const dimensionRanges = {
-            N: { min: 8, max: 40, low: 19, medium: 29 },
-            E: { min: 9, max: 45, low: 21, medium: 33 },
-            O: { min: 8, max: 40, low: 19, medium: 29 },
-            A: { min: 7, max: 35, low: 16, medium: 26 },
-            C: { min: 8, max: 40, low: 19, medium: 29 }
-        };
-
-        // 全局变量
-        let currentQuestionIndex = 0;
-        const userAnswers = {};
-        const dimensionScores = { E: 0, O: 0, A: 0, C: 0, N: 0 };
-        const dimensionCounts = { E: 0, O: 0, A: 0, C: 0, N: 0 };
-
-        // DOM元素
-        const welcomePage = document.getElementById('welcome-page');
-        const testPage = document.getElementById('test-page');
-        const loadingPage = document.getElementById('loading-page');
-        const resultPage = document.getElementById('result-page');
-        const startTestBtn = document.getElementById('start-test');
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const questionNumber = document.getElementById('question-number');
-        const questionProgress = document.getElementById('question-progress');
-        const questionText = document.getElementById('question-text');
-        const optionsContainer = document.getElementById('options-container');
-        const progressFill = document.getElementById('progress-fill');
-        const personalityType = document.getElementById('personality-type');
-        const personalityIcon = document.getElementById('personality-icon');
-        const personalityDescription = document.getElementById('personality-description');
-        const dimensionsContainer = document.getElementById('dimensions-container');
-        const shareBtn = document.getElementById('share-btn');
-        const retakeBtn = document.getElementById('retake-btn');
-
-        // 事件监听器
-        startTestBtn.addEventListener('click', startTest);
-        prevBtn.addEventListener('click', showPreviousQuestion);
-        nextBtn.addEventListener('click', showNextQuestion);
-        shareBtn.addEventListener('click', shareResult);
-        retakeBtn.addEventListener('click', retakeTest);
-
-        // 开始测试
-        function startTest() {
-            welcomePage.classList.add('hidden');
-            testPage.classList.remove('hidden');
-            showQuestion(currentQuestionIndex);
-        }
-
-        // 显示当前问题
-        function showQuestion(index) {
-            const question = questions[index];
-            questionNumber.textContent = `问题 ${index + 1}/${questions.length}`;
-            questionProgress.textContent = `${index + 1}/${questions.length}`;
-            questionText.textContent = question.text;
-            progressFill.style.width = `${(index / questions.length) * 100}%`;
-
-            // 更新按钮状态
-            prevBtn.disabled = index === 0;
-            nextBtn.textContent = index === questions.length - 1 ? '完成测试' : '下一题';
-
-            // 清空选项容器
-            optionsContainer.innerHTML = '';
-
-            // 根据问题类型生成选项
-            switch (question.type) {
-                case 'score':
-                    createScoreOptions(question);
-                    break;
-                case 'radio':
-                    createRadioOptions(question);
-                    break;
-                case 'select':
-                    createSelectOptions(question);
-                    break;
-                case 'text':
-                    createTextInput(question);
-                    break;
-            }
-        }
-
-        // 创建评分选项
-        function createScoreOptions(question) {
-            const scoreLabels = ['非常不符合', '比较不符合', '一般', '比较符合', '非常符合'];
-            const scoreContainer = document.createElement('div');
-            scoreContainer.className = 'option-score';
-
-            for (let i = 1; i <= 5; i++) {
-                const scoreBtn = document.createElement('div');
-                scoreBtn.className = `score-btn ${userAnswers[question.id] === i ? 'selected' : ''}`;
-                scoreBtn.innerHTML = `
-                    <div class="font-bold">${i}</div>
-                    <div class="text-xs">${scoreLabels[i - 1]}</div>
-                `;
-                scoreBtn.addEventListener('click', () => {
-                    document.querySelectorAll('.score-btn').forEach(btn => btn.classList.remove('selected'));
-                    scoreBtn.classList.add('selected');
-                    userAnswers[question.id] = i;
-                });
-                scoreContainer.appendChild(scoreBtn);
-            }
-
-            optionsContainer.appendChild(scoreContainer);
-        }
-
-        // 创建单选选项
-        function createRadioOptions(question) {
-            const radioGroup = document.createElement('div');
-            radioGroup.className = 'radio-group';
-
-            question.options.forEach(option => {
-                const radioOption = document.createElement('div');
-                radioOption.className = 'radio-option';
-                radioOption.innerHTML = `
-                    <input type="radio" id="option-${question.id}-${option}" name="question-${question.id}" value="${option}" ${userAnswers[question.id] === option ? 'checked' : ''}>
-                    <label for="option-${question.id}-${option}">${option}</label>
-                `;
-                radioOption.querySelector('input').addEventListener('change', (e) => {
-                    userAnswers[question.id] = e.target.value;
-                });
-                radioGroup.appendChild(radioOption);
-            });
-
-            optionsContainer.appendChild(radioGroup);
-        }
-
-        // 创建下拉选择选项
-        function createSelectOptions(question) {
-            const select = document.createElement('select');
-            select.className = 'text-input';
-            select.id = `select-${question.id}`;
-
-            const defaultOption = document.createElement('option');
-            defaultOption.value = '';
-            defaultOption.textContent = '请选择';
-            defaultOption.selected = userAnswers[question.id] === undefined;
-            select.appendChild(defaultOption);
-
-            question.options.forEach(option => {
-                const optionElement = document.createElement('option');
-                optionElement.value = option;
-                optionElement.textContent = option;
-                optionElement.selected = userAnswers[question.id] === option;
-                select.appendChild(optionElement);
-            });
-
-            select.addEventListener('change', (e) => {
-                userAnswers[question.id] = e.target.value;
-            });
-
-            optionsContainer.appendChild(select);
-        }
-
-        // 创建文本输入
-        function createTextInput(question) {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.className = 'text-input';
-            input.id = `text-${question.id}`;
-            input.placeholder = '请输入...';
-            input.value = userAnswers[question.id] || '';
-            input.addEventListener('input', (e) => {
-                userAnswers[question.id] = e.target.value;
-            });
-
-            optionsContainer.appendChild(input);
-        }
-
-        // 显示上一题
-        function showPreviousQuestion() {
-            if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                showQuestion(currentQuestionIndex);
-            }
-        }
-
-        // 显示下一题或完成测试
-        function showNextQuestion() {
-            const currentQuestion = questions[currentQuestionIndex];
+    <!-- 结果页 -->
+    <div id="result-page" class="screen hidden">
+        <div class="max-w-3xl mx-auto px-4 py-8 fade-in">
+            <!-- 结果头部 -->
+            <div class="text-center mb-12">
+                <div id="personality-image" class="w-32 h-32 mx-auto mb-6 bg-neutral-100 rounded-full flex items-center justify-center text-6xl"></div>
+                <span class="text-sm text-neutral-500 mb-2 block">你的人格类型是</span>
+                <h1 id="personality-type" class="text-4xl md:text-5xl font-bold mb-4"></h1>
+                <p id="personality-dimensions" class="text-sm text-neutral-500 mb-4"></p>
+                <p id="personality-description" class="text-lg text-neutral-600 max-w-xl mx-auto leading-relaxed"></p>
+            </div>
             
-            // 检查是否已回答当前问题
-            if (userAnswers[currentQuestion.id] === undefined) {
-                alert('请回答当前问题');
-                return;
-            }
-
-            if (currentQuestionIndex === questions.length - 1) {
-                completeTest();
-            } else {
-                currentQuestionIndex++;
-                showQuestion(currentQuestionIndex);
-            }
-        }
-
-        // 完成测试
-        function completeTest() {
-            testPage.classList.add('hidden');
-            loadingPage.classList.remove('hidden');
-
-            // 计算得分
-            calculateScores();
-
-            // 延迟显示结果，模拟加载过程
-            setTimeout(() => {
-                loadingPage.classList.add('hidden');
-                resultPage.classList.remove('hidden');
-                showResult();
-            }, 2000);
-        }
-
-        // 计算各维度得分
-        function calculateScores() {
-            // 重置得分
-            for (const dimension in dimensionScores) {
-                dimensionScores[dimension] = 0;
-                dimensionCounts[dimension] = 0;
-            }
-
-            // 计算各维度得分
-            for (let i = 0; i < 40; i++) { // 只计算前40题
-                const question = questions[i];
-                const answer = userAnswers[question.id];
-                
-                if (answer !== undefined && question.dimension !== 'none') {
-                    let score = answer;
-                    
-                    // 反向计分
-                    if (question.direction === 'negative') {
-                        score = 6 - answer; // 1↔5, 2↔4, 3↔3
-                    }
-                    
-                    dimensionScores[question.dimension] += score;
-                    dimensionCounts[question.dimension]++;
-                }
-            }
-        }
-
-        // 显示测试结果
-        function showResult() {
-            // 确定各维度高低
-            const dimensionLevels = {};
-            for (const dimension in dimensionScores) {
-                const score = dimensionScores[dimension];
-                const range = dimensionRanges[dimension];
-                
-                if (score <= range.low) {
-                    dimensionLevels[dimension] = 'low';
-                } else if (score <= range.medium) {
-                    dimensionLevels[dimension] = 'medium';
-                } else {
-                    dimensionLevels[dimension] = 'high';
-                }
-            }
-
-            // 匹配人格类型
-            let matchedType = personalityTypes[0]; // 默认类型
-            
-            // 寻找最匹配的类型
-            let bestMatchScore = 0;
-            
-            for (const type of personalityTypes) {
-                let matchScore = 0;
-                
-                // 计算匹配度
-                for (const dimension in dimensionLevels) {
-                    if (type.dimensions[dimension] === dimensionLevels[dimension]) {
-                        matchScore++;
-                    }
-                }
-                
-                if (matchScore > bestMatchScore) {
-                    bestMatchScore = matchScore;
-                    matchedType = type;
-                }
-            }
-
-            // 显示结果
-            personalityType.textContent = matchedType.name;
-            personalityIcon.src = matchedType.icon;
-            personalityIcon.alt = matchedType.name;
-            personalityDescription.textContent = matchedType.description;
-
-            // 显示维度条形图
-            dimensionsContainer.innerHTML = '';
-            const dimensionLabels = { E: '外向性', O: '开放性', A: '宜人性', C: '尽责性', N: '神经质' };
-            const dimensionColors = { E: '#3b82f6', O: '#8b5cf6', A: '#10b981', C: '#f59e0b', N: '#ef4444' };
-
-            for (const dimension in dimensionScores) {
-                const range = dimensionRanges[dimension];
-                const percentage = ((dimensionScores[dimension] - range.min) / (range.max - range.min)) * 100;
-                
-                const dimensionBar = document.createElement('div');
-                dimensionBar.className = 'dimension-bar';
-                dimensionBar.innerHTML = `
-                    <div class="dimension-label">${dimensionLabels[dimension]}</div>
-                    <div class="dimension-progress">
-                        <div class="dimension-fill" style="width: 0%; background-color: ${dimensionColors[dimension]}"></div>
+            <!-- 五大人格雷达图 -->
+            <div class="bg-white border border-neutral-200 rounded-xl p-6 mb-6">
+                <h2 class="text-lg font-medium mb-4">五大人格得分</h2>
+                <div class="flex justify-around items-end h-48 mb-4">
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 bg-neutral-100 rounded-t-lg relative" style="height: 100px;">
+                            <div id="e-score-bar" class="dimension-bar absolute bottom-0 w-full bg-black rounded-t-lg" style="height: 0%"></div>
+                        </div>
+                        <span class="text-xs mt-2 text-neutral-500">E</span>
+                        <span id="e-score-text" class="text-sm font-medium">0</span>
                     </div>
-                    <div class="dimension-score">${dimensionScores[dimension]}</div>
-                `;
-                
-                dimensionsContainer.appendChild(dimensionBar);
-                
-                // 动画效果
-                setTimeout(() => {
-                    const fill = dimensionBar.querySelector('.dimension-fill');
-                    fill.style.width = `${percentage}%`;
-                }, 300);
-            }
-        }
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 bg-neutral-100 rounded-t-lg relative" style="height: 100px;">
+                            <div id="o-score-bar" class="dimension-bar absolute bottom-0 w-full bg-black rounded-t-lg" style="height: 0%"></div>
+                        </div>
+                        <span class="text-xs mt-2 text-neutral-500">O</span>
+                        <span id="o-score-text" class="text-sm font-medium">0</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 bg-neutral-100 rounded-t-lg relative" style="height: 100px;">
+                            <div id="a-score-bar" class="dimension-bar absolute bottom-0 w-full bg-black rounded-t-lg" style="height: 0%"></div>
+                        </div>
+                        <span class="text-xs mt-2 text-neutral-500">A</span>
+                        <span id="a-score-text" class="text-sm font-medium">0</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 bg-neutral-100 rounded-t-lg relative" style="height: 100px;">
+                            <div id="c-score-bar" class="dimension-bar absolute bottom-0 w-full bg-black rounded-t-lg" style="height: 0%"></div>
+                        </div>
+                        <span class="text-xs mt-2 text-neutral-500">C</span>
+                        <span id="c-score-text" class="text-sm font-medium">0</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 bg-neutral-100 rounded-t-lg relative" style="height: 100px;">
+                            <div id="n-score-bar" class="dimension-bar absolute bottom-0 w-full bg-black rounded-t-lg" style="height: 0%"></div>
+                        </div>
+                        <span class="text-xs mt-2 text-neutral-500">N</span>
+                        <span id="n-score-text" class="text-sm font-medium">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 人格详情 -->
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white border border-neutral-200 rounded-xl p-6">
+                    <h2 class="text-lg font-medium mb-4">💪 性格优势</h2>
+                    <ul id="strengths-list" class="space-y-2 text-neutral-600"></ul>
+                </div>
+                <div class="bg-white border border-neutral-200 rounded-xl p-6">
+                    <h2 class="text-lg font-medium mb-4">🎯 成长建议</h2>
+                    <ul id="challenges-list" class="space-y-2 text-neutral-600"></ul>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white border border-neutral-200 rounded-xl p-6">
+                    <h2 class="text-lg font-medium mb-4">💼 适合领域</h2>
+                    <ul id="career-list" class="space-y-2 text-neutral-600"></ul>
+                </div>
+                <div class="bg-white border border-neutral-200 rounded-xl p-6">
+                    <h2 class="text-lg font-medium mb-4">💕 人际相处</h2>
+                    <ul id="relationship-list" class="space-y-2 text-neutral-600"></ul>
+                </div>
+            </div>
+            
+            <!-- 人格分布图 -->
+            <div class="bg-white border border-neutral-200 rounded-xl p-6 mb-6">
+                <h2 class="text-lg font-medium mb-4">📊 人格类型分布</h2>
+                <div class="h-64">
+                    <canvas id="personality-distribution-chart"></canvas>
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="retake-btn" class="px-8 py-3 border border-neutral-300 hover:bg-neutral-100 transition-all-300 hover-effect">
+                    <i class="fa fa-redo mr-2"></i> 重新测试
+                </button>
+                <button id="share-btn" class="px-8 py-3 bg-black text-white hover:bg-neutral-800 transition-all-300 hover-effect">
+                    <i class="fa fa-share mr-2"></i> 分享结果
+                </button>
+            </div>
+        </div>
+    </div>
 
-        // 分享结果
-        function shareResult() {
-            if (navigator.share) {
-                navigator.share({
-                    title: '我的校园人格测试结果',
-                    text: `我是${personalityType.textContent}！来测试看看你的校园人格类型吧！`,
-                    url: window.location.href
-                });
-            } else {
-                // 复制链接到剪贴板
-                const url = window.location.href;
-                navigator.clipboard.writeText(url).then(() => {
-                    alert('链接已复制到剪贴板，分享给好友吧！');
-                });
-            }
-        }
+    <!-- 统计页 -->
+    <div id="stats-page" class="screen hidden">
+        <div class="max-w-4xl mx-auto px-4 py-8 fade-in">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold mb-2">测试统计</h1>
+                <p class="text-neutral-500">已有 <span id="stats-total-tests">0</span> 人参与测试</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-white border border-neutral-200 rounded-xl p-6">
+                    <h2 class="text-lg font-medium mb-4">人格类型分布</h2>
+                    <div class="h-64">
+                        <canvas id="stats-personality-chart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white border border-neutral-200 rounded-xl p-6">
+                    <h2 class="text-lg font-medium mb-4">五大人格平均分</h2>
+                    <div class="h-64">
+                        <canvas id="stats-dimensions-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button id="back-to-intro-from-stats" class="px-6 py-3 border border-neutral-300 hover:bg-neutral-100 transition-all-300">
+                    <i class="fa fa-arrow-left mr-2"></i> 返回首页
+                </button>
+            </div>
+        </div>
+    </div>
 
-        // 重新测试
-        function retakeTest() {
-            // 重置全局变量
-            currentQuestionIndex = 0;
-            Object.keys(userAnswers).forEach(key => delete userAnswers[key]);
-            for (const dimension in dimensionScores) {
-                dimensionScores[dimension] = 0;
-                dimensionCounts[dimension] = 0;
-            }
+    <!-- 分享弹窗 -->
+    <div id="share-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 fade-in">
+            <h2 class="text-xl font-bold mb-4">分享你的结果</h2>
+            <p class="text-neutral-600 mb-4">你的 <span id="share-type" class="font-semibold"></span> 人格</p>
+            <p id="share-text" class="text-neutral-500 text-sm mb-6"></p>
+            <button id="copy-link-btn" class="w-full py-3 bg-black text-white hover:bg-neutral-800 transition-all-300">
+                <i class="fa fa-copy mr-2"></i> 复制链接
+            </button>
+            <button id="close-share-modal" class="w-full py-3 mt-2 text-neutral-500 hover:text-black transition-colors">
+                关闭
+            </button>
+        </div>
+    </div>
 
-            // 返回测试页面
-            resultPage.classList.add('hidden');
-            testPage.classList.remove('hidden');
-            showQuestion(currentQuestionIndex);
-        }
-    </script>
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-6 py-3 rounded-lg opacity-0 pointer-events-none toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
