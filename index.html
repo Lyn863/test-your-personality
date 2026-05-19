@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com;">
     <title>校园人格测试 - 五大人格维度</title>
     <!-- Tailwind CSS v3 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <!-- 自定义样式 -->
     <link rel="stylesheet" href="style.css">
     <!-- Tailwind 配置 -->
@@ -145,9 +142,14 @@
                     </button>
                     
                     <!-- 数据统计按钮 -->
-                    <button id="stats-btn" class="mt-6 bg-white border border-neutral-300 text-neutral-600 font-light py-2 px-6 rounded-none hover:bg-neutral-50 transition-all-300 text-sm hover-effect">
-                        <i class="fa fa-bar-chart mr-2"></i> 查看统计数据
-                    </button>
+                    <div class="mt-6 flex justify-center gap-4">
+                        <button id="stats-btn" class="bg-white border border-neutral-300 text-neutral-600 font-light py-2 px-6 rounded-none hover:bg-neutral-50 transition-all-300 text-sm hover-effect">
+                            <i class="fa fa-bar-chart mr-2"></i> 查看统计数据
+                        </button>
+                        <a href="/admin" class="bg-white border border-neutral-300 text-neutral-600 font-light py-2 px-6 rounded-none hover:bg-neutral-50 transition-all-300 text-sm hover-effect inline-flex items-center">
+                            <i class="fa fa-lock mr-2"></i> 管理后台
+                        </a>
+                    </div>
                 </div>
             </div>
         </section>

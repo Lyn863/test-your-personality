@@ -1,18 +1,5 @@
-// Firebase 配置
-const firebaseConfig = {
-    apiKey: "AIzaSyD1w7QzV6yF7qJ1X5wJZ7X5X7z8X5X7z8X",
-    authDomain: "campus-personality-test.firebaseapp.com",
-    projectId: "campus-personality-test",
-    storageBucket: "campus-personality-test.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:1234567890123456789012",
-    measurementId: "G-123456789012"
-};
-
-// 初始化 Firebase
-firebase.initializeApp(firebaseConfig);
-const analytics = firebase.analytics();
-const db = firebase.firestore();
+// 后端 API 地址
+const API_BASE = '';
 
 // 自定义鼠标效果
 const customCursor = document.getElementById('custom-cursor');
@@ -58,9 +45,6 @@ function showScreen(screenId) {
     document.getElementById(screenId).classList.remove('hidden');
     
     // 记录页面访问
-    analytics.logEvent('screen_view', {
-        screen_name: screenId
-    });
 }
 
 // 测试题目数据
@@ -490,9 +474,6 @@ function startTest() {
     
     showScreen('test-page');
     showQuestion(currentQuestionIndex);
-    
-    // 记录测试开始事件
-    analytics.logEvent('test_start');
 }
 
 // 显示问题
@@ -793,26 +774,27 @@ function matchPersonalityType(scores) {
 // 保存测试结果
 function saveTestResult(scores, personalityType) {
     const testResult = {
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
         scores: scores,
         personalityType: personalityType.id,
-        testDuration: (new Date() - testStartTime) / 1000, // 秒
+        testDuration: (new Date() - testStartTime) / 1000,
         userInfo: userInfo
     };
-    
-    // 保存到 Firebase
-    db.collection('testResults').add(testResult)
-        .then(docRef => {
-            console.log('测试结果已保存:', docRef.id);
-            // 记录测试完成事件
-            analytics.logEvent('test_complete', {
-                personality_type: personalityType.id,
-                test_duration: testResult.testDuration
-            });
-        })
-        .catch(error => {
-            console.error('保存测试结果时出错:', error);
-        });
+
+    fetch(`${API_BASE}/api/test-result`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testResult)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            console.log('测试结果已保存, ID:', data.id);
+        }
+    })
+    .catch(error => {
+        console.error('保存测试结果时出错:', error);
+    });
 }
 
 // 显示结果
@@ -947,12 +929,11 @@ function showStatsPage() {
 
 // 加载统计数据
 function loadStatsData() {
-    // 获取测试总数
-    db.collection('testResults').get()
-        .then(querySnapshot => {
-            const totalTests = querySnapshot.size;
-            document.getElementById('total-tests').textContent = totalTests;
-            document.getElementById('stats-total-tests').textContent = totalTests;
+    fetch(`${API_BASE}/api/stats`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('total-tests').textContent = data.totalTests;
+            document.getElementById('stats-total-tests').textContent = data.totalTests;
         })
         .catch(error => {
             console.error('获取统计数据时出错:', error);
@@ -1062,22 +1043,20 @@ function initCharts() {
 
 // 更新结果页面的图表
 function updateResultCharts() {
-    // 获取人格类型分布数据
-    db.collection('testResults').get()
-        .then(querySnapshot => {
+    fetch(`${API_BASE}/api/stats`)
+        .then(res => res.json())
+        .then(data => {
             const typeCounts = {};
             personalityTypes.forEach(type => {
                 typeCounts[type.id] = 0;
             });
-            
-            querySnapshot.forEach(doc => {
-                const result = doc.data();
-                if (typeCounts.hasOwnProperty(result.personalityType)) {
-                    typeCounts[result.personalityType]++;
+
+            data.typeDistribution.forEach(item => {
+                if (typeCounts.hasOwnProperty(item.personality_type)) {
+                    typeCounts[item.personality_type] = item.count;
                 }
             });
-            
-            // 更新图表数据
+
             if (personalityDistributionChart) {
                 personalityDistributionChart.data.labels = personalityTypes.map(type => type.name);
                 personalityDistributionChart.data.datasets[0].data = personalityTypes.map(type => typeCounts[type.id]);
@@ -1091,61 +1070,46 @@ function updateResultCharts() {
 
 // 更新统计页面的图表
 function updateStatsCharts() {
-    // 获取人格类型分布数据
-    db.collection('testResults').get()
-        .then(querySnapshot => {
+    fetch(`${API_BASE}/api/stats`)
+        .then(res => res.json())
+        .then(data => {
             const typeCounts = {};
-            const dimensionScores = { E: 0, O: 0, A: 0, C: 0, N: 0 };
-            let totalTests = 0;
-            
             personalityTypes.forEach(type => {
                 typeCounts[type.id] = 0;
             });
-            
-            querySnapshot.forEach(doc => {
-                const result = doc.data();
-                
-                // 统计人格类型
-                if (typeCounts.hasOwnProperty(result.personalityType)) {
-                    typeCounts[result.personalityType]++;
+
+            data.typeDistribution.forEach(item => {
+                if (typeCounts.hasOwnProperty(item.personality_type)) {
+                    typeCounts[item.personality_type] = item.count;
                 }
-                
-                // 统计维度得分
-                Object.keys(dimensionScores).forEach(dim => {
-                    if (result.scores && result.scores[dim]) {
-                        dimensionScores[dim] += result.scores[dim];
-                    }
-                });
-                
-                totalTests++;
             });
-            
+
             // 更新人格分布图表
             if (statsPersonalityChart) {
                 const colors = [
                     '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
                     '#FF9F40', '#C9CBCF', '#7BC225', '#1A73E8', '#EA4335'
                 ];
-                
+
                 statsPersonalityChart.data.labels = personalityTypes.map(type => type.name);
                 statsPersonalityChart.data.datasets[0].data = personalityTypes.map(type => typeCounts[type.id]);
                 statsPersonalityChart.data.datasets[0].backgroundColor = colors;
                 statsPersonalityChart.update();
             }
-            
+
             // 更新维度平均分图表
-            if (statsDimensionsChart && totalTests > 0) {
-                const avgScores = Object.keys(dimensionScores).map(dim => 
-                    Math.round((dimensionScores[dim] / totalTests) * 10) / 10
+            if (statsDimensionsChart && data.totalTests > 0) {
+                const avgScores = ['E', 'O', 'A', 'C', 'N'].map(dim =>
+                    data.dimensionAverages[dim] || 0
                 );
-                
+
                 statsDimensionsChart.data.datasets[0].data = avgScores;
                 statsDimensionsChart.update();
             }
-            
+
             // 更新测试总数
-            document.getElementById('total-tests').textContent = totalTests;
-            document.getElementById('stats-total-tests').textContent = totalTests;
+            document.getElementById('total-tests').textContent = data.totalTests;
+            document.getElementById('stats-total-tests').textContent = data.totalTests;
         })
         .catch(error => {
             console.error('获取统计数据时出错:', error);

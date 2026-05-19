@@ -1,0 +1,14 @@
+{
+  "name": "test-your-personality",
+  "version": "1.0.0",
+  "description": "校园人格测试 - 五大人格维度",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sql.js": "^1.10.3",
+    "cors": "^2.8.5"
+  }
+}

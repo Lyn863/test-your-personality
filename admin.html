@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 校园人格测试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        table th, table td { white-space: nowrap; }
+    </style>
+</head>
+<body class="bg-neutral-50 min-h-screen">
+    <!-- 登录页面 -->
+    <div id="login-page" class="min-h-screen flex items-center justify-center">
+        <div class="bg-white p-8 border border-neutral-200 w-full max-w-sm">
+            <h1 class="text-2xl font-light text-center mb-8">管理后台</h1>
+            <div class="mb-6">
+                <input type="password" id="password-input" class="w-full px-4 py-3 border border-neutral-300 focus:outline-none focus:border-black transition-colors" placeholder="请输入管理密码">
+            </div>
+            <button id="login-btn" class="w-full bg-black text-white py-3 hover:bg-neutral-800 transition-colors">登录</button>
+            <p id="login-error" class="text-red-500 text-sm mt-4 text-center hidden">密码错误</p>
+        </div>
+    </div>
+
+    <!-- 管理面板 -->
+    <div id="admin-panel" class="hidden">
+        <!-- 顶部导航 -->
+        <header class="bg-white border-b border-neutral-200 px-6 py-4">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <h1 class="text-xl font-light">校园人格测试 - 管理后台</h1>
+                <button id="logout-btn" class="text-sm text-neutral-500 hover:text-black transition-colors">退出</button>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            <!-- 统计概览 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white border border-neutral-200 p-6">
+                    <p class="text-sm text-neutral-500 mb-2">总测试人数</p>
+                    <p id="stat-total" class="text-3xl font-light">0</p>
+                </div>
+                <div class="bg-white border border-neutral-200 p-6">
+                    <p class="text-sm text-neutral-500 mb-2">最多人格类型</p>
+                    <p id="stat-top-type" class="text-3xl font-light">-</p>
+                </div>
+                <div class="bg-white border border-neutral-200 p-6">
+                    <p class="text-sm text-neutral-500 mb-2">平均测试时长</p>
+                    <p id="stat-avg-duration" class="text-3xl font-light">-</p>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white border border-neutral-200 p-6">
+                    <h2 class="text-lg font-light mb-4">人格类型分布</h2>
+                    <div class="h-80">
+                        <canvas id="type-chart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white border border-neutral-200 p-6">
+                    <h2 class="text-lg font-light mb-4">五大人格维度平均分</h2>
+                    <div class="h-80">
+                        <canvas id="dimension-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="bg-white border border-neutral-200 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-light">测试记录</h2>
+                    <button id="export-btn" class="px-4 py-2 border border-neutral-300 text-sm hover:bg-neutral-50 transition-colors">
+                        导出 CSV
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-neutral-200">
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">ID</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">时间</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">人格类型</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">E</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">O</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">A</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">C</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">N</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">学业阶段</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">MBTI</th>
+                                <th class="text-left py-3 px-2 font-normal text-neutral-500">测试时长</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body">
+                        </tbody>
+                    </table>
+                </div>
+                <p id="no-data" class="text-center text-neutral-400 py-8 hidden">暂无测试数据</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let adminPassword = '';
+        let allResults = [];
+
+        // 人格类型名称映射
+        const typeNames = {
+            'campus_apollo': '校园阿波罗',
+            'campus_athena': '校园雅典娜',
+            'campus_dionysus': '校园狄俄尼索斯',
+            'campus_hermes': '校园赫尔墨斯',
+            'campus_artemis': '校园阿尔忒弥斯',
+            'campus_zeus': '校园宙斯',
+            'campus_demeter': '校园德墨忒尔',
+            'campus_poseidon': '校园波塞冬',
+            'campus_hades': '校园哈迪斯',
+            'campus_hestia': '校园赫斯提亚'
+        };
+
+        // 登录
+        document.getElementById('login-btn').addEventListener('click', login);
+        document.getElementById('password-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') login();
+        });
+
+        function login() {
+            const password = document.getElementById('password-input').value;
+            fetch(`${API_BASE}/api/verify-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    adminPassword = password;
+                    document.getElementById('login-page').classList.add('hidden');
+                    document.getElementById('admin-panel').classList.remove('hidden');
+                    document.getElementById('admin-panel').classList.add('fade-in');
+                    loadAdminData();
+                } else {
+                    document.getElementById('login-error').classList.remove('hidden');
+                }
+            })
+            .catch(() => {
+                document.getElementById('login-error').classList.remove('hidden');
+            });
+        }
+
+        // 退出
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            adminPassword = '';
+            allResults = [];
+            document.getElementById('admin-panel').classList.add('hidden');
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('password-input').value = '';
+        });
+
+        // 加载管理数据
+        function loadAdminData() {
+            fetch(`${API_BASE}/api/test-results`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: adminPassword })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    allResults = data.results;
+                    updateStats();
+                    updateCharts();
+                    updateTable();
+                }
+            })
+            .catch(error => {
+                console.error('加载数据失败:', error);
+            });
+        }
+
+        // 更新统计概览
+        function updateStats() {
+            document.getElementById('stat-total').textContent = allResults.length;
+
+            // 最多人格类型
+            const typeCounts = {};
+            allResults.forEach(r => {
+                typeCounts[r.personality_type] = (typeCounts[r.personality_type] || 0) + 1;
+            });
+            const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
+            document.getElementById('stat-top-type').textContent = topType ? (typeNames[topType[0]] || topType[0]) : '-';
+
+            // 平均测试时长
+            const durations = allResults.map(r => r.test_duration).filter(d => d > 0);
+            const avgDuration = durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
+            document.getElementById('stat-avg-duration').textContent = avgDuration > 0 ? `${Math.round(avgDuration)}秒` : '-';
+        }
+
+        // 更新图表
+        let typeChart = null;
+        let dimensionChart = null;
+
+        function updateCharts() {
+            // 人格类型分布
+            const typeCounts = {};
+            Object.keys(typeNames).forEach(id => typeCounts[id] = 0);
+            allResults.forEach(r => {
+                if (typeCounts.hasOwnProperty(r.personality_type)) {
+                    typeCounts[r.personality_type]++;
+                }
+            });
+
+            const colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                '#FF9F40', '#C9CBCF', '#7BC225', '#1A73E8', '#EA4335'
+            ];
+
+            if (typeChart) typeChart.destroy();
+            typeChart = new Chart(document.getElementById('type-chart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.values(typeNames),
+                    datasets: [{
+                        data: Object.values(typeCounts),
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+
+            // 维度平均分
+            const dimTotals = { E: 0, O: 0, A: 0, C: 0, N: 0 };
+            let validCount = 0;
+            allResults.forEach(r => {
+                if (r.scores && r.scores.E !== undefined) {
+                    Object.keys(dimTotals).forEach(dim => {
+                        dimTotals[dim] += r.scores[dim] || 0;
+                    });
+                    validCount++;
+                }
+            });
+
+            const dimAvgs = Object.keys(dimTotals).map(dim =>
+                validCount > 0 ? Math.round((dimTotals[dim] / validCount) * 10) / 10 : 0
+            );
+
+            if (dimensionChart) dimensionChart.destroy();
+            dimensionChart = new Chart(document.getElementById('dimension-chart'), {
+                type: 'radar',
+                data: {
+                    labels: ['外向性 (E)', '开放性 (O)', '宜人性 (A)', '尽责性 (C)', '神经质 (N)'],
+                    datasets: [{
+                        label: '平均分',
+                        data: dimAvgs,
+                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                        borderColor: 'rgba(0, 0, 0, 1)',
+                        borderWidth: 1,
+                        pointBackgroundColor: 'rgba(0, 0, 0, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { beginAtZero: true, max: 5, ticks: { stepSize: 1 } } }
+                }
+            });
+        }
+
+        // 更新数据表格
+        function updateTable() {
+            const tbody = document.getElementById('data-table-body');
+            const noData = document.getElementById('no-data');
+
+            if (allResults.length === 0) {
+                noData.classList.remove('hidden');
+                return;
+            }
+
+            noData.classList.add('hidden');
+            tbody.innerHTML = '';
+
+            allResults.forEach(result => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-neutral-100 hover:bg-neutral-50';
+
+                const time = new Date(result.timestamp);
+                const timeStr = `${time.getFullYear()}-${String(time.getMonth() + 1).padStart(2, '0')}-${String(time.getDate()).padStart(2, '0')} ${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
+
+                const scores = result.scores || {};
+                const info = result.userInfo || {};
+
+                tr.innerHTML = `
+                    <td class="py-3 px-2 text-neutral-400">${result.id}</td>
+                    <td class="py-3 px-2">${timeStr}</td>
+                    <td class="py-3 px-2">${typeNames[result.personality_type] || result.personality_type}</td>
+                    <td class="py-3 px-2">${scores.E !== undefined ? scores.E.toFixed(1) : '-'}</td>
+                    <td class="py-3 px-2">${scores.O !== undefined ? scores.O.toFixed(1) : '-'}</td>
+                    <td class="py-3 px-2">${scores.A !== undefined ? scores.A.toFixed(1) : '-'}</td>
+                    <td class="py-3 px-2">${scores.C !== undefined ? scores.C.toFixed(1) : '-'}</td>
+                    <td class="py-3 px-2">${scores.N !== undefined ? scores.N.toFixed(1) : '-'}</td>
+                    <td class="py-3 px-2">${info.educationStage || '-'}</td>
+                    <td class="py-3 px-2">${info.mbti || '-'}</td>
+                    <td class="py-3 px-2">${result.test_duration ? Math.round(result.test_duration) + '秒' : '-'}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 导出 CSV
+        document.getElementById('export-btn').addEventListener('click', () => {
+            if (allResults.length === 0) {
+                alert('暂无数据可导出');
+                return;
+            }
+
+            const headers = ['ID', '时间', '人格类型', 'E', 'O', 'A', 'C', 'N', '学业阶段', '是否做过测试', '测试频率', '测试目的', '自我认知帮助', '提及标签', '结果准确性', '心理影响', '对测试看法', 'MBTI', '测试时长(秒)'];
+
+            const rows = allResults.map(r => {
+                const s = r.scores || {};
+                const u = r.userInfo || {};
+                return [
+                    r.id,
+                    r.timestamp,
+                    typeNames[r.personality_type] || r.personality_type,
+                    s.E !== undefined ? s.E.toFixed(1) : '',
+                    s.O !== undefined ? s.O.toFixed(1) : '',
+                    s.A !== undefined ? s.A.toFixed(1) : '',
+                    s.C !== undefined ? s.C.toFixed(1) : '',
+                    s.N !== undefined ? s.N.toFixed(1) : '',
+                    u.educationStage || '',
+                    u.hasTakenPersonalityTest !== undefined ? (u.hasTakenPersonalityTest ? '是' : '否') : '',
+                    u.testFrequency || '',
+                    u.testPurpose || '',
+                    u.helpfulnessForSelfAwareness || '',
+                    u.mentionPersonalityTag || '',
+                    u.resultAccuracy || '',
+                    u.psychologicalImpact || '',
+                    u.viewOnPersonalityTests || '',
+                    u.mbti || '',
+                    r.test_duration ? Math.round(r.test_duration) : ''
+                ];
+            });
+
+            const csvContent = '﻿' + [headers, ...rows].map(row =>
+                row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+            ).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `人格测试数据_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+        });
+    </script>
+</body>
+</html>
