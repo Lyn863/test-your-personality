@@ -1,181 +1,103 @@
 const express = require('express');
-const initSqlJs = require('sql.js');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-const DB_PATH = path.join(__dirname, 'test_results.db');
 
-// 中间件
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname,)));
+app.use(express.static(path.join(__dirname)));
 
-let db;
+// In-memory storage (for Railway ephemeral storage, consider using a database for production)
+let testResults = [];
+let adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+let nextId = 1;
 
-// 初始化数据库
-async function initDatabase() {
-  const SQL = await initSqlJs();
+// API Routes
 
-  // 如果数据库文件存在则加载，否则创建新数据库
-  if (fs.existsSync(DB_PATH)) {
-    const buffer = fs.readFileSync(DB_PATH);
-    db = new SQL.Database(buffer);
-  } else {
-    db = new SQL.Database();
-  }
-
-  // 创建表
-  db.run(`
-    CREATE TABLE IF NOT EXISTS test_results (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      timestamp TEXT NOT NULL,
-      scores TEXT NOT NULL,
-      personality_type TEXT NOT NULL,
-      test_duration REAL,
-      user_info TEXT
-    )
-  `);
-
-  saveDatabase();
-  console.log('数据库初始化完成');
-}
-
-// 保存数据库到文件
-function saveDatabase() {
-  const data = db.export();
-  const buffer = Buffer.from(data);
-  fs.writeFileSync(DB_PATH, buffer);
-}
-
-// 查询辅助函数
-function queryAll(sql, params = []) {
-  const stmt = db.prepare(sql);
-  if (params.length > 0) stmt.bind(params);
-  const results = [];
-  while (stmt.step()) {
-    results.push(stmt.getAsObject());
-  }
-  stmt.free();
-  return results;
-}
-
-function queryOne(sql, params = []) {
-  const results = queryAll(sql, params);
-  return results.length > 0 ? results[0] : null;
-}
-
-// 保存测试结果
+// Save test result
 app.post('/api/test-result', (req, res) => {
-  try {
-    const { timestamp, scores, personalityType, testDuration, userInfo } = req.body;
-
-    db.run(`
-      INSERT INTO test_results (timestamp, scores, personality_type, test_duration, user_info)
-      VALUES (?, ?, ?, ?, ?)
-    `, [timestamp, JSON.stringify(scores), personalityType, testDuration, JSON.stringify(userInfo)]);
-
-    // 获取刚插入的 ID
-    const lastId = queryOne('SELECT last_insert_rowid() as id');
-    saveDatabase();
-
-    res.json({ success: true, id: lastId ? lastId.id : null });
-  } catch (error) {
-    console.error('保存测试结果失败:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
+    const result = {
+        id: nextId++,
+        timestamp: req.body.timestamp || new Date().toISOString(),
+        scores: req.body.scores,
+        personality_type: req.body.personalityType,
+        test_duration: req.body.testDuration,
+        userInfo: req.body.userInfo || {}
+    };
+    
+    testResults.push(result);
+    console.log('New test result saved:', result.id);
+    
+    res.json({ success: true, id: result.id });
 });
 
-// 获取统计数据
-app.get('/api/stats', (req, res) => {
-  try {
-    const totalResult = queryOne('SELECT COUNT(*) as count FROM test_results');
-    const totalTests = totalResult ? totalResult.count : 0;
-
-    // 人格类型分布
-    const typeDistribution = queryAll(`
-      SELECT personality_type, COUNT(*) as count
-      FROM test_results
-      GROUP BY personality_type
-    `);
-
-    // 维度平均分
-    const allResults = queryAll('SELECT scores FROM test_results');
-    const dimensionTotals = { E: 0, O: 0, A: 0, C: 0, N: 0 };
-    let validCount = 0;
-
-    allResults.forEach(row => {
-      const scores = JSON.parse(row.scores);
-      if (scores.E !== undefined) {
-        Object.keys(dimensionTotals).forEach(dim => {
-          dimensionTotals[dim] += scores[dim] || 0;
-        });
-        validCount++;
-      }
-    });
-
-    const dimensionAverages = {};
-    Object.keys(dimensionTotals).forEach(dim => {
-      dimensionAverages[dim] = validCount > 0
-        ? Math.round((dimensionTotals[dim] / validCount) * 10) / 10
-        : 0;
-    });
-
-    res.json({ totalTests, typeDistribution, dimensionAverages });
-  } catch (error) {
-    console.error('获取统计数据失败:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// 验证管理密码
-app.post('/api/verify-password', (req, res) => {
-  const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ success: false, error: '密码错误' });
-  }
-});
-
-// 获取所有测试结果（需要密码）
+// Get all results (admin)
 app.post('/api/test-results', (req, res) => {
-  const { password } = req.body;
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ success: false, error: '密码错误' });
-  }
+    if (req.body.password !== adminPassword) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    
+    res.json({ success: true, results: testResults });
+});
 
-  try {
-    const results = queryAll('SELECT * FROM test_results ORDER BY id DESC');
-    const parsed = results.map(row => ({
-      ...row,
-      scores: JSON.parse(row.scores),
-      userInfo: row.user_info ? JSON.parse(row.user_info) : null
+// Verify password
+app.post('/api/verify-password', (req, res) => {
+    const isValid = req.body.password === adminPassword;
+    res.json({ success: isValid });
+});
+
+// Get stats
+app.get('/api/stats', (req, res) => {
+    const totalTests = testResults.length;
+    
+    // Calculate type distribution
+    const typeDistribution = {};
+    testResults.forEach(result => {
+        const type = result.personality_type;
+        typeDistribution[type] = (typeDistribution[type] || 0) + 1;
+    });
+    
+    const typeDistributionArray = Object.entries(typeDistribution).map(([personality_type, count]) => ({
+        personality_type,
+        count
     }));
-
-    res.json({ success: true, results: parsed });
-  } catch (error) {
-    console.error('获取测试结果失败:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
+    
+    // Calculate dimension averages
+    const dimensionTotals = { E: 0, O: 0, A: 0, C: 0, N: 0 };
+    let validScoreCount = 0;
+    
+    testResults.forEach(result => {
+        if (result.scores) {
+            Object.keys(dimensionTotals).forEach(dim => {
+                dimensionTotals[dim] += result.scores[dim] || 0;
+            });
+            validScoreCount++;
+        }
+    });
+    
+    const dimensionAverages = {};
+    if (validScoreCount > 0) {
+        Object.keys(dimensionTotals).forEach(dim => {
+            dimensionAverages[dim] = dimensionTotals[dim] / validScoreCount;
+        });
+    }
+    
+    res.json({
+        totalTests,
+        typeDistribution: typeDistributionArray,
+        dimensionAverages
+    });
 });
 
-// 路由：管理后台
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin.html'));
+// Serve index.html for all other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 启动服务器
-initDatabase().then(() => {
-  app.listen(PORT, () => {
-    console.log(`服务器已启动: http://localhost:${PORT}`);
-    console.log(`管理后台: http://localhost:${PORT}/admin`);
-    console.log(`管理密码: ${ADMIN_PASSWORD}`);
-  });
-}).catch(err => {
-  console.error('数据库初始化失败:', err);
-  process.exit(1);
+// Start server
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
