@@ -79,7 +79,7 @@ const questions = [
     
     // 尽责性 (C) - 8题
     { id: 25, dimension: 'C', text: '论文作业你总是提前一周就开始准备，而不是等到最后两天赶工', type: 'rating', reverse: false },
-    { id: 26, dimension: 'E', text: '设定了每天背单词学英语的计划，虽然偶尔懈怠但大部分时间都在坚持', type: 'rating', reverse: false },
+    { id: 26, dimension: 'C', text: '设定了每天背单词学英语的计划，虽然偶尔懈怠但大部分时间都在坚持', type: 'rating', reverse: false },
     { id: 27, dimension: 'C', text: 'DDL是第一生产力，在截止日期前你效率最高，之后反而提不起劲', type: 'rating', reverse: true },
     { id: 28, dimension: 'C', text: '和老师、同学约好了时间，你一定会准时到达，很少迟到', type: 'rating', reverse: false },
     { id: 29, dimension: 'C', text: '考试前你会制定详细的复习计划表，并严格执行', type: 'rating', reverse: false },
@@ -492,11 +492,14 @@ const copyLinkBtn = document.getElementById('copy-link-btn');
 const shareModal = document.getElementById('share-modal');
 const toast = document.getElementById('toast');
 
+const backToIntroFromStatsBtn = document.getElementById('back-to-intro-from-stats');
+
 // 初始化
 function init() {
     startTestBtn.addEventListener('click', startTest);
     statsBtn.addEventListener('click', showStatsPage);
     backToIntroBtn.addEventListener('click', () => showScreen('intro-page'));
+    backToIntroFromStatsBtn.addEventListener('click', () => showScreen('intro-page'));
     prevBtn.addEventListener('click', goToPreviousQuestion);
     nextBtn.addEventListener('click', goToNextQuestion);
     retakeBtn.addEventListener('click', retakeTest);
