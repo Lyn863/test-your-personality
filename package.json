@@ -1,7 +1,7 @@
 {
   "name": "personality-test",
   "version": "1.0.0",
-  "description": "校园人格测试 - 五大人格维度",
+  "description": "校园人格测试",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
