@@ -1,5 +1,5 @@
-// 后端 API 地址
-const API_BASE = '';
+// 后端 API 地址 - 自动适配部署环境
+const API_BASE = window.location.origin;
 
 // 自定义鼠标效果
 const customCursor = document.getElementById('custom-cursor');

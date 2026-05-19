@@ -104,7 +104,9 @@
     </div>
 
     <script>
-        const API_BASE = '';
+        // 后端 API 地址 - 自动适配部署环境
+        const API_BASE = window.location.origin;
+        
         let adminPassword = '';
         let allResults = [];
 
@@ -350,7 +352,7 @@
                 ];
             });
 
-            const csvContent = '﻿' + [headers, ...rows].map(row =>
+            const csvContent = '\ufeff' + [headers, ...rows].map(row =>
                 row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
             ).join('\n');
 

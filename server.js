@@ -12,7 +12,7 @@ const DB_PATH = path.join(__dirname, 'test_results.db');
 // 中间件
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname,)));
 
 let db;
 
