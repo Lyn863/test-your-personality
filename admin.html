@@ -110,18 +110,18 @@
         let adminPassword = '';
         let allResults = [];
 
-        // 人格类型名称映射
+        // 人格类型名称映射 - 10种新类型
         const typeNames = {
             'campus_apollo': '校园阿波罗',
-            'campus_athena': '校园雅典娜',
-            'campus_dionysus': '校园狄俄尼索斯',
-            'campus_hermes': '校园赫尔墨斯',
-            'campus_artemis': '校园阿尔忒弥斯',
-            'campus_zeus': '校园宙斯',
-            'campus_demeter': '校园德墨忒尔',
-            'campus_poseidon': '校园波塞冬',
-            'campus_hades': '校园哈迪斯',
-            'campus_hestia': '校园赫斯提亚'
+            'avoidant_frail_eggroll': '回避型脆皮蛋卷',
+            'campus_columbus': '校园哥伦布',
+            'veteran_roll_king': '老资历卷王',
+            'good_person': '好人',
+            'campus_sekiros': '校园只狼',
+            'chill_person': '没招了淡人',
+            'campus_only_human': '校园唯一人类',
+            'campus_regent': '校园摄政王',
+            'elder': '老辈子'
         };
 
         // 登录
@@ -188,7 +188,6 @@
         function updateStats() {
             document.getElementById('stat-total').textContent = allResults.length;
 
-            // 最多人格类型
             const typeCounts = {};
             allResults.forEach(r => {
                 typeCounts[r.personality_type] = (typeCounts[r.personality_type] || 0) + 1;
@@ -196,7 +195,6 @@
             const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
             document.getElementById('stat-top-type').textContent = topType ? (typeNames[topType[0]] || topType[0]) : '-';
 
-            // 平均测试时长
             const durations = allResults.map(r => r.test_duration).filter(d => d > 0);
             const avgDuration = durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
             document.getElementById('stat-avg-duration').textContent = avgDuration > 0 ? `${Math.round(avgDuration)}秒` : '-';
